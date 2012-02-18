@@ -1,0 +1,18 @@
+OBJDIRS += module
+
+MOD_SRCFILES :=		module/testmodule.c
+
+
+MOD_OBJFILES := $(patsubst module/%.c, $(OBJDIR)/module/%.o, $(MOD_SRCFILES))
+MOD_OBJFILES := $(patsubst module/%.S, $(OBJDIR)/module/%.o, $(MOD_OBJFILES))
+
+$(OBJDIR)/module/%.o: module/%.c
+	@echo + cc[USER] $<
+	@mkdir -p $(@D)
+	$(V)$(CC) -nostdinc $(USER_CFLAGS) -c -o $@ $<
+
+$(OBJDIR)/module/%.o: module/%.S
+	@echo + as[USER] $<
+	@mkdir -p $(@D)
+	$(V)$(CC) -nostdinc $(USER_CFLAGS) -c -o $@ $<
+

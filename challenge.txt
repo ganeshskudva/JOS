@@ -1,0 +1,228 @@
+Lab 4A : 
+Challenge Problem #1 - e:mail - masubramania@cs.stonybrook.edu
+This Challenge problem has been implemented.
+By Default , the Round Robin Scheduling will be active. In order to enable the Priority Scheduling , we need to enable the COmpiler Flag - SCHED_PRIORITY in GNUmakefile.
+
+#############
+Implementation -
+#############
+I have added a variable called Priority in env structure and i have exposed a system call to application so that it can set the priority for itself or its child .
+When the sched_yield is called , the function checks to see , the next process which has higher priority( towards the right of current process ) compared the currently running process, if none are found , then the function checks from Process-1 to the current process - if any of the process with more priority than current process is found , then it is scheduled , otherwise the current process itself is scheduled.
+
+#######
+Testing - 
+########
+I have changed the dumbfork process to call the system call sys_set_sched_priority to set its priority and its chlds priority.
+
+I have provided some of the sample output for the folowing cases -
+1. Round Robin
+2. Priority with Child's Priority More than parent priority
+3. Both the priorities are equal
+4. Parent's Priority is higher than child
+
+Round Robin Sheduling Algorithm
+===========================
+0: I am the parent!
+0: I am the child!
+1: I am the parent!
+1: I am the child!
+2: I am the parent!
+2: I am the child!
+3: I am the parent!
+3: I am the child!
+4: I am the parent!
+4: I am the child!
+5: I am the parent!
+5: I am the child!
+6: I am the parent!
+6: I am the child!
+7: I am the parent!
+7: I am the child!
+8: I am the parent!
+8: I am the child!
+9: I am the parent!
+9: I am the child!
+[00001001] exiting gracefully
+[00001001] free env 00001001
+
+Priority Scheduling problem with child having higher priority
+===========================================================
+
+0: I am the parent!
+0: I am the child!
+1: I am the child!
+2: I am the child!
+3: I am the child!
+4: I am the child!
+5: I am the child!
+6: I am the child!
+7: I am the child!
+8: I am the child!
+9: I am the child!
+10: I am the child!
+11: I am the child!
+12: I am the child!
+13: I am the child!
+14: I am the child!
+15: I am the child!
+16: I am the child!
+17: I am the child!
+18: I am the child!
+19: I am the child!
+[00001002] exiting gracefully
+[00001002] free env 00001002
+1: I am the parent!
+2: I am the parent!
+3: I am the parent!
+4: I am the parent!
+5: I am the parent!
+6: I am the parent!
+7: I am the parent!
+8: I am the parent!
+9: I am the parent!
+[00001001] exiting gracefully
+[00001001] free env 00001001
+
+
+Child and Parent having equal priority
+=====================================
+
+0: I am the parent!
+0: I am the child!
+1: I am the parent!
+1: I am the child!
+2: I am the parent!
+2: I am the child!
+3: I am the parent!
+3: I am the child!
+4: I am the parent!
+4: I am the child!
+5: I am the parent!
+5: I am the child!
+6: I am the parent!
+6: I am the child!
+7: I am the parent!
+7: I am the child!
+8: I am the parent!
+8: I am the child!
+9: I am the parent!
+9: I am the child!
+[00001001] exiting gracefully
+[00001001] free env 00001001
+Env being Free'd ran for 11 times
+10: I am the child!
+11: I am the child!
+12: I am the child!
+13: I am the child!
+14: I am the child!
+15: I am the child!
+16: I am the child!
+17: I am the child!
+18: I am the child!
+19: I am the child!
+[00001002] exiting gracefully
+[00001002] free env 00001002
+
+
+Parent has Higher Priority than child
+===================================
+0: I am the parent!
+1: I am the parent!
+2: I am the parent!
+3: I am the parent!
+4: I am the parent!
+5: I am the parent!
+6: I am the parent!
+7: I am the parent!
+8: I am the parent!
+9: I am the parent!
+[00001001] exiting gracefully
+[00001001] free env 00001001
+Env being Free'd ran for 1 times
+0: I am the child!
+1: I am the child!
+2: I am the child!
+3: I am the child!
+4: I am the child!
+5: I am the child!
+6: I am the child!
+7: I am the child!
+8: I am the child!
+9: I am the child!
+10: I am the child!
+11: I am the child!
+12: I am the child!
+13: I am the child!
+14: I am the child!
+15: I am the child!
+16: I am the child!
+17: I am the child!
+18: I am the child!
+19: I am the child!
+[00001002] exiting gracefully
+[00001002] free env 00001002
+
+
+
+
+
+
+
+
+
+
+
+
+==========================================
+Lab 3A  : Challenge
+
+Updating the IDT table using the Macros in Trapentry.S
+
+
+I have not done the coding for this challenge, however, i have just provided a brief writing on the possible solution .
+
+In the Current code, idt_init does the SETGATE and TRAPHANDLER macro introduces the code , which is used in the idt table. 
+
+Now, I can change the Macro to introduce another lable , which does the update of idt[num] with the funciton name and then does a relative jump to next init section , ( Assumming all TRAPHANDLER macro are written consectively).
+When the Last TRAPHANDLER Macro does a Relative Jump , it goes to "idt_init_complete " lable, which just does a ret instruction to go back to idt_init.
+
+
+#define TRAPHANDLER_NOEC(name_init,name,num) 
+
+name_init :
+     (1)Code here to update idt[num] with function (offset ) = name
+     (2)Do a Relative Jump to NEXT init Section .
+
+     // We need to determine the relative address where the next init section 
+     //will be present, based on the size of instruction that follows in 
+     //"name:" section
+
+name :
+push $0
+push $(num)
+jump _alltraps
+
+Basically , the idt_init would push the return address to stack and jump to First init - this init will popluate the idt[num] and jump to next init , thus forming a chain .
+
+//=========================================
+//trap.c file
+//=========================================
+idt_init
+{
+     __asm__(" push %%eip\n"
+             " jmp div_zero_init\n");
+ 
+       cprintf("IDT init done \n");
+}
+
+//===============================================
+//trapentry.S file 
+//===============================================
+
+
+TRAPHANDLER_NOEC(div_zero_init,handle_div_zero,0);
+TRAPHANDLER(pg_flt_init,handle_pgflt);
+
+idt_init_complete :   /* this is the address to which the last macro jumps */
+  ret
+
